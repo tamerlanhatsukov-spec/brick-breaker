@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Brick Breaker</title>
+    <style>
+        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { background: #000; border: 2px solid #fff; max-width: 100%; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let ballRadius = 10, x = canvas.width/2, y = canvas.height-30, dx = 3, dy = -3;
+        let paddleHeight = 10, paddleWidth = 75, paddleX = (canvas.width-paddleWidth)/2;
+        let rowCount = 5, colCount = 5, brickW = 70, brickH = 20, padding = 10, offsetTop = 30, offsetLeft = 5;
+
+        let bricks = [];
+        for(let c=0; c<colCount; c++) {
+            bricks[c] = [];
+            for(let r=0; r<rowCount; r++) bricks[c][r] = { x: 0, y: 0, status: 1 };
+        }
+
+        document.addEventListener("mousemove", (e) => {
+            let relativeX = e.clientX - canvas.offsetLeft;
+            if(relativeX > 0 && relativeX < canvas.width) paddleX = relativeX - paddleWidth/2;
+        });
+
+
+        canvas.addEventListener("touchmove", (e) => {
+            let relativeX = e.touches[0].clientX - canvas.offsetLeft;
+            if(relativeX > 0 && relativeX < canvas.width) paddleX = relativeX - paddleWidth/2;
+            e.preventDefault();
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for(let c=0; c<colCount; c++) {
+                for(let r=0; r<rowCount; r++) {
+                    if(bricks[c][r].status == 1) {
+                        let bx = (c*(brickW+padding))+offsetLeft;
+                        let by = (r*(brickH+padding))+offsetTop;
+                        bricks[c][r].x = bx; bricks[c][r].y = by;
+                        ctx.fillStyle = "#0095DD";
+                        ctx.fillRect(bx, by, brickW, brickH);
+                    }
+                }
+            }
+
+            ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+            ctx.fillStyle = "#fff"; ctx.fill(); ctx.closePath();
+
+            ctx.fillStyle = "#ff0000"; ctx.fillRect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+
+            if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
+            if(y + dy < ballRadius) dy = -dy;
+            else if(y + dy > canvas.height-ballRadius) {
+                if(x > paddleX && x < paddleX + paddleWidth) dy = -dy;
+                else document.location.reload();
+            }
+
+            for(let c=0; c<colCount; c++) {
+                for(let r=0; r<rowCount; r++) {
+                    let b = bricks[c][r];
+                    if(b.status == 1) {
+                        if(x > b.x && x < b.x+brickW && y > b.y && y < b.y+brickH) {
+                            dy = -dy; b.status = 0;
+                        }
+                    }
+                }
+            }
+            x += dx; y += dy;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>
